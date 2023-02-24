@@ -1,0 +1,28 @@
+@using static JD_Quiz_Blazor.Pages.Front
+
+<h1>Start Quiz</h1>
+<div class="card">
+  <div class="card-header">
+    Question #1 of @QuestionNumber
+      <br />
+    Category: @Category?.Name
+  </div>
+  <div class="card-body">
+    <h5 class="card-subtitle">Special title treatment</h5>
+    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+    <a href="#" class="btn btn-primary">Go somewhere</a>
+  </div>
+</div>
+
+@code {
+    [Parameter]
+    public int QuestionNumber { get; set; }
+
+    [Parameter]
+    public QuizCategory? Category { get; set; }
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        Console.WriteLine("QuestionNumber: " + QuestionNumber);
+        Console.WriteLine("Category: " + Category?.Name + " " + Category?.Id);
+    }
+}
