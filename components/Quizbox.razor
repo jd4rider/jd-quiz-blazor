@@ -1,16 +1,20 @@
 @using static JD_Quiz_Blazor.Pages.Front
+@inject HttpClient Http
 
-<h1>Start Quiz</h1>
 <div class="card">
   <div class="card-header">
-    Question #1 of @QuestionNumber
+    Question #@(currentQuestion + 1) of @QuestionNumber
       <br />
     Category: @Category?.Name
   </div>
   <div class="card-body">
-    <h5 class="card-subtitle">Special title treatment</h5>
-    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-    <a href="#" class="btn btn-primary">Go somewhere</a>
+    @if(QuizQuestions != null) { 
+      <h5 class="card-subtitle">@((MarkupString)QuizQuestions[currentQuestion]!.Question!)</h5>
+    }
+    <Answers />
+    <div class="card-footer">
+      <button class="btn btn-primary" @onclick="NextQuestion">Next Question</button>
+    </div>
   </div>
 </div>
 
@@ -20,9 +24,95 @@
 
     [Parameter]
     public QuizCategory? Category { get; set; }
+
+    [Parameter]
+    public String? Difficulty { get; set;}
+
+    [Parameter]
+    public String? QuizType { get; set;}
     protected override async Task OnInitializedAsync(){
         await base.OnInitializedAsync();
-        Console.WriteLine("QuestionNumber: " + QuestionNumber);
-        Console.WriteLine("Category: " + Category?.Name + " " + Category?.Id);
+        //Console.WriteLine("QuestionNumber: " + QuestionNumber);
+        //Console.WriteLine("Category: " + Category?.Name + " " + Category?.Id);
+        //Console.WriteLine("Difficulty: " + Difficulty);
+        //Console.WriteLine("QuizType: " + QuizType);
+        var quizType = QuizType?.ToLower();
+        if (QuizType == "True / False") quizType = "boolean";
+        else if (QuizType == "Multiple Choice") quizType = "multiple";
+
+
+
+        var url = "";
+        if (Difficulty?.ToLower() == "any" && quizType == "any" && Category?.Id != 0) {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&category=" + Category?.Id;
+        } else if (Difficulty?.ToLower() != "any" && Category?.Id == 0 && quizType == "any") {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&difficulty=" + Difficulty?.ToLower();
+        } else if (Difficulty?.ToLower() != "any" && Category?.Id != 0 && quizType == "any") {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&category=" + Category?.Id + "&difficulty=" + Difficulty?.ToLower();
+        } else if (Difficulty?.ToLower() == "any" && Category?.Id == 0 && quizType != "any") {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&type=" + quizType;
+        } else if (Difficulty?.ToLower() == "any" && Category?.Id != 0 && quizType != "any") {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&category=" + Category?.Id + "&type=" + quizType;
+        } else if (Difficulty?.ToLower() != "any" && Category?.Id == 0 && quizType != "any") {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&difficulty=" + Difficulty?.ToLower() + "&type=" + quizType;
+        } else if (Difficulty?.ToLower() != "any" && Category?.Id != 0 && quizType != "any") {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber + "&category=" + Category?.Id + "&difficulty=" + Difficulty?.ToLower() + "&type=" + quizType;
+        } else {
+            url = "https://opentdb.com/api.php?amount=" + QuestionNumber;
+        }
+
+        var response = await Http.GetFromJsonAsync<QuizResponse>(url);
+
+        Console.WriteLine(url);
+
+        QuizQuestions = response?.results;
+
+        List<List<string>> AnswersShuffled = new List<List<string>>();
+
+        Console.WriteLine("Before If");
+        if(QuizQuestions != null) {
+            Console.WriteLine("After If");
+            foreach (var i in QuizQuestions) {
+                Console.WriteLine("Foreach");
+                if (i.Incorrect_Answers != null && i.Correct_Answer != null) {
+                    Console.WriteLine("Foreach Ifs");
+                    List<string> answerss = i.Incorrect_Answers.Append<string>(i.Correct_Answer).ToList();
+                
+                    //var shuffledcards = cards.OrderBy(a => Guid.NewGuid()).ToList();
+                    List<string> shuffledAnswers = answerss.OrderBy(a => Guid.NewGuid()).ToList();
+                    Console.WriteLine(shuffledAnswers[0]);
+                    AnswersShuffled.Add(shuffledAnswers);
+                }
+            }
+        }
+
+        
+        //Console.WriteLine(AnswersShuffled[0][0]);
+
+
+        //Console.WriteLine(response?.results?[0].Question);
     }
+
+    private int currentQuestion = 0;
+
+    private void NextQuestion() {
+        currentQuestion++;
+    }
+
+    public List<QuizQuestion>? QuizQuestions { get; set; }
+
+    public class QuizResponse
+    {
+        public List<QuizQuestion>? results { get; set; }
+    }
+    public class QuizQuestion
+    {
+        public string? Category { get; set; }
+        public string? type { get; set; }
+        public string? Difficulty { get; set; }
+        public string? Question { get; set; }
+        public string? Correct_Answer { get; set; }
+        public List<string>? Incorrect_Answers { get; set; }
+    }
+    //{"category":"Science: Computers","type":"multiple","difficulty":"hard","question":"What was the name of the security vulnerability found in Bash in 2014?","correct_answer":"Shellshock","incorrect_answers":["Heartbleed","Bashbug","Stagefright"]}
 }

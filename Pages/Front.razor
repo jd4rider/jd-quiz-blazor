@@ -3,7 +3,6 @@
 
 <PageTitle>JD Quiz</PageTitle>
 
-<h1>JD Quiz</h1>
 
 @if (!startQuiz) { <form @onsubmit="StartQuiz">
   <div class="mb-3">
@@ -25,9 +24,29 @@
         }
     }
     </select>
+  </div>  
+  <div class="mb-3">
+    <label for="quizDifficulty" class="form-label">Quiz Difficulty</label>
+    <select class="form-select" id="quizDifficulty" @onchange="DifficultyChanged">
+        <option selected={true}>Any</option>
+        <option>Easy</option>
+        <option>Medium</option>
+        <option>Hard</option>
+    </select>
   </div>
-  <button type="submit" class="btn btn-primary">Submit</button>
-</form> } else { <Quizbox QuestionNumber="@noOfQuestions" Category="@selectedCategory" /> }
+  <div class="mb-3">
+    <label for="quizType" class="form-label">Quiz Type</label>
+    <select class="form-select" id="quizType" @onchange="DifficultyChanged">
+        <option selected={true}>Any</option>
+        <option>Multiple Choice</option>
+        <option>True / False</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Start Quiz</button>
+</form> } else { <Quizbox QuestionNumber="@noOfQuestions" 
+                          Difficulty="@selectedDifficulty" 
+                          Category="@selectedCategory"
+                          QuizType="@selectedType" /> }
 
 @code {
     
@@ -58,6 +77,20 @@
         private bool startQuiz = false;
 
         private int noOfQuestions = 10;
+
+        private String selectedDifficulty = "Any";
+
+        private String selectedType = "Any";
+
+        private void TypeChanged(ChangeEventArgs e)
+        {
+            selectedType = e.Value!.ToString()!;
+        }
+
+        private void DifficultyChanged(ChangeEventArgs e)
+        {
+            selectedDifficulty = e.Value!.ToString()!;
+        }
 
         private QuizCategory selectedCategory = new QuizCategory { Id = 0, Name = "Any Category" };
 
